@@ -1,16 +1,38 @@
+import io
 import os
 import tempfile
 
 os.environ["DB_PATH"] = os.path.join(tempfile.mkdtemp(), "test.db")
 os.environ["ADMIN_KEY"] = "secret"
 
-from fastapi.testclient import TestClient  # noqa: E402
+from flask.testing import FlaskClient  # noqa: E402
 
 from app import db  # noqa: E402
 from app.main import app  # noqa: E402
 
-c = TestClient(app)
-c.cookies.set("lang", "en")  # assertions below match English text
+
+class Client(FlaskClient):
+    def open(self, *args, **kwargs):
+        kwargs.setdefault("follow_redirects", True)
+        return super().open(*args, **kwargs)
+
+    def cookie(self, name):
+        found = self.get_cookie(name)
+        return found.value if found else None
+
+
+app.test_client_class = Client
+c = app.test_client()
+c.set_cookie("lang", "en")  # assertions below match English text
+
+
+def csv_upload(data):
+    return {"file": (io.BytesIO(data), "p.csv")}
+
+
+def test_passenger_entry_point():
+    import passenger_wsgi
+    assert passenger_wsgi.application is app  # Passenger gets the Flask WSGI app itself
 
 
 def test_every_ui_string_is_translated():
@@ -26,11 +48,11 @@ def test_every_ui_string_is_translated():
 
 
 def test_language_switch():
-    other = TestClient(app)
+    other = app.test_client()
     assert 'lang="uk"' in other.get("/").text  # default without cookie or header
     assert "Aprende" in other.get("/", headers={"accept-language": "es-ES,es;q=0.9"}).text
     r = other.get("/lang/en", headers={"referer": "http://evil.example//x"}, follow_redirects=False)
-    assert r.headers["location"] == "/" and other.cookies.get("lang") == "en"
+    assert r.headers["location"] == "/" and other.cookie("lang") == "en"
     r = other.get("/lang/es", headers={"referer": "http://testserver/phrases?q=a"}, follow_redirects=False)
     assert r.headers["location"] == "/phrases?q=a"
     assert "Clave incorrecta" in other.post("/admin/login", data={"key": "x"}).text
@@ -91,25 +113,25 @@ def test_full_flow():
     assert db.q("SELECT id FROM phrases WHERE phrase = 'Vale'") and not db.q("SELECT id FROM suggestions")
     db.q("DELETE FROM phrases WHERE phrase = 'Vale'")
 
-    assert "Привіт" in c.get("/phrases", params={"q": "привіт"}).text
+    assert "Привіт" in c.get("/phrases", query_string={"q": "привіт"}).text
 
-    c.cookies.set("consent", "1")
+    c.set_cookie("consent", "1")
     hola = db.q("SELECT id FROM phrases WHERE phrase = 'Hola'")[0]["id"]
     r = c.post("/play/es", data={"phrase_id": hola, "other_id": hola})
-    assert "Correct" in r.text and c.cookies.get("streak_es") == "1" and c.cookies.get("used_es") == str(hola)
+    assert "Correct" in r.text and c.cookie("streak_es") == "1" and c.cookie("used_es") == str(hola)
     r = c.post("/play/tf", data={"phrase_id": hola, "other_id": hola, "answer": "no"})
-    assert "Not quite" in r.text and c.cookies.get("streak_tf") == "0"
+    assert "Not quite" in r.text and c.cookie("streak_tf") == "0"
 
     assert 'aria-checked="false"' in c.get("/").text  # skip-examples is off by default
     c.get("/skip-examples", headers={"referer": "http://testserver/"})
-    assert c.cookies.get("skip") == "1"
+    assert c.cookie("skip") == "1"
     r = c.post("/play/es", data={"phrase_id": hola, "other_id": hola}, follow_redirects=False)
     assert r.status_code == 303 and r.headers["location"].startswith("/play/es?msg=")
-    assert c.cookies.get("streak_es") == "2"  # streak still counts when the result page is skipped
+    assert c.cookie("streak_es") == "2"  # streak still counts when the result page is skipped
     r = c.post("/play/tf", data={"phrase_id": hola, "other_id": hola, "answer": "no"})
     assert "Not quite" in r.text  # wrong answers still show the example
     c.get("/skip-examples")
-    assert c.cookies.get("skip") == "0"
+    assert c.cookie("skip") == "0"
 
     for mode in ("tf", "es", "uk"):
         assert c.get(f"/play/{mode}").status_code == 200
@@ -123,7 +145,7 @@ def test_full_flow():
 
     before = len(db.all_rows("phrases"))
     csv_bytes = "phrase,translation\nGracias,Дякую\nNuevo,Нове\n,x\n".encode("utf-8")
-    page = c.post("/admin/import", files={"file": ("p.csv", csv_bytes, "text/csv")}).text
+    page = c.post("/admin/import", data=csv_upload(csv_bytes)).text
     assert "Will be added: 1. Skipped: 2." in page and "already in the database" in page
     assert len(db.all_rows("phrases")) == before  # preview writes nothing
     token = db.q("SELECT token FROM imports")[0]["token"]
@@ -133,7 +155,7 @@ def test_full_flow():
     assert "Nuevo" in c.get("/phrases.csv").text
 
     c.post("/admin/logout")
-    assert c.post("/admin/import", files={"file": ("p.csv", csv_bytes, "text/csv")}).url.path == "/"
+    assert c.post("/admin/import", data=csv_upload(csv_bytes)).request.path == "/"
     gratias = db.q("SELECT id FROM phrases WHERE phrase = 'Gracias'")[0]["id"]
     c.post(f"/admin/phrases/{gratias}", data={"action": "delete"})
     assert db.get("phrases", gratias) is not None  # not admin: no delete

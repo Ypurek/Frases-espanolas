@@ -1,6 +1,6 @@
 # Frases
 
-A small FastAPI + SQLite app for learning Spanish phrases with Ukrainian translations.
+A small Flask + SQLite app for learning Spanish phrases with Ukrainian translations.
 
 ## Environment variables
 
@@ -16,10 +16,10 @@ A small FastAPI + SQLite app for learning Spanish phrases with Ukrainian transla
 
 ```powershell
 uv sync
-$env:ADMIN_KEY = "change-me"; uv run uvicorn app.main:app --reload
+$env:ADMIN_KEY = "change-me"; uv run flask --app app.main run --debug
 ```
 
-Open http://127.0.0.1:8000.
+Open http://127.0.0.1:5000.
 
 ## Tests
 
@@ -38,8 +38,8 @@ uv export --no-dev --no-hashes -o requirements.txt
 ## Deploy to cPanel
 
 1. Upload the project (without `.venv` and `data.db`).
-2. In **Setup Python App**, create an app with this folder as the application root and `passenger_wsgi.py` as the startup file.
+2. In **Setup Python App**, create an app (Python 3.12+) with this folder as the application root, `passenger_wsgi.py` as the startup file and `application` as the entry point.
 3. Add `ADMIN_KEY` (and optionally `DB_PATH`) in the app's environment variables.
 4. Run `pip install -r requirements.txt` in the app's virtualenv, then restart the app.
 
-FastAPI is ASGI; `a2wsgi` wraps it as the WSGI `application` that Passenger imports.
+Flask is WSGI, so Passenger imports the Flask app directly as `application`. If cPanel overwrites `passenger_wsgi.py` with its own template when creating the app, restore it with `git checkout passenger_wsgi.py`.
