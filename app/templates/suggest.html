@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{{ _("Suggest a phrase") }}{% endblock %}
+{% block content %}
+<h1>{{ _("Suggest a phrase") }}</h1>
+<form method="post" class="stack">
+  {% set row = none %}{% include "_fields.html" %}
+  <button>{{ _("Send suggestion") }}</button>
+</form>
+<p class="center"><a href="/">← {{ _("Menu") }}</a></p>
+{% endblock %}

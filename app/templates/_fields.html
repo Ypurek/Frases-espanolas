@@ -1,0 +1,4 @@
+<label>{{ _("Spanish phrase") }} <input name="phrase" lang="es" value="{{ row.phrase if row else '' }}" required maxlength="1000"></label>
+<label>{{ _("Ukrainian translation") }} <input name="translation" lang="uk" value="{{ row.translation if row else '' }}" required maxlength="1000"></label>
+<label>{{ _("Note / description") }} <textarea name="note" rows="2" maxlength="1000">{{ row.note if row else '' }}</textarea></label>
+<label>{{ _("Example") }} <textarea name="example" rows="2" maxlength="1000">{{ row.example if row else '' }}</textarea></label>

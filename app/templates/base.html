@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="{{ lang }}">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Frases{% endblock %} · Frases</title>
+<link rel="stylesheet" href="{{ url_for('static', path='style.css') }}">
+<script>try { var t = localStorage.getItem('theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+</head>
+<body>
+<header>
+  <a href="/" class="logo">¡Frases!</a>
+  <nav>
+    {% if is_admin %}<a href="/admin" class="admin-link">{{ _("Admin") }}</a>{% endif %}
+    <span class="langs" role="group" aria-label="{{ _('Language') }}">
+      {% for code, label in langs.items() %}<a href="/lang/{{ code }}" hreflang="{{ code }}"{% if code == lang %} aria-current="true"{% endif %}>{{ label }}</a>{% endfor %}
+    </span>
+    <a href="/skip-examples" class="icon toggle" role="switch" aria-checked="{{ 'true' if skip else 'false' }}"
+       title="{{ _('Skip the example after a correct answer') }}" aria-label="{{ _('Skip the example after a correct answer') }}">⏭</a>
+    <button type="button" class="icon" id="theme" aria-label="{{ _('Toggle light/dark mode') }}">◐</button>
+  </nav>
+</header>
+<main>
+{% if msg %}<p class="msg">{{ msg }}</p>{% endif %}
+{% block content %}{% endblock %}
+</main>
+
+{% if consent is none %}
+<div class="consent" id="consent" role="dialog" aria-label="{{ _('Cookie policy') }}">
+  <p>{{ _("We use cookies to remember the phrases you have already played, your win streak, theme and language. No tracking, no ads.") }}</p>
+  <div class="row">
+    <button type="button" data-consent="1">{{ _("Accept") }}</button>
+    <button type="button" class="secondary" data-consent="0">{{ _("Decline") }}</button>
+  </div>
+</div>
+{% endif %}
+
+<script>
+document.getElementById('theme').onclick = function () {
+  var root = document.documentElement;
+  var cur = root.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  root.dataset.theme = cur === 'dark' ? 'light' : 'dark';
+  try { localStorage.setItem('theme', root.dataset.theme); } catch (e) {}
+};
+document.querySelectorAll('[data-consent]').forEach(function (b) {
+  b.onclick = function () {
+    document.cookie = 'consent=' + b.dataset.consent + '; max-age=34560000; path=/; samesite=lax';
+    document.getElementById('consent').remove();
+  };
+});
+</script>
+</body>
+</html>

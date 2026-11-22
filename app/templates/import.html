@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}{{ _("Import phrases (CSV)") }}{% endblock %}
+{% block content %}
+<h1>{{ _("Import phrases (CSV)") }}</h1>
+
+{% if rows is not defined and not error %}
+<div class="card open">
+  <p><strong>{{ _("Import only adds phrases. Nothing already in the database is changed or removed.") }}</strong></p>
+  <p>{{ _("The file must be UTF-8 CSV (comma, semicolon or tab separated) and the first row must hold the column names:") }}</p>
+  <p class="example">phrase, translation, note, example</p>
+  <p class="muted">{{ _("phrase and translation are required. A row is skipped if that exact phrase + translation already exists.") }}
+    <a href="/phrases.csv">{{ _("Download the current phrases (CSV) to use as a template.") }}</a></p>
+  <form method="post" enctype="multipart/form-data" class="stack">
+    <input type="file" name="file" accept=".csv,text/csv" required aria-label="{{ _('CSV file') }}">
+    <button>{{ _("Check file") }}</button>
+  </form>
+</div>
+{% else %}
+<p class="muted">{{ _("File: {name}", name=filename) }}</p>
+  {% if error %}
+  <div class="warn"><strong>{{ _("Can't import this file:") }}</strong> {{ error }}</div>
+  {% else %}
+  {% set skipped = rows|selectattr("problems")|list %}
+  <div class="card open">
+    <p>{{ _("Will be added: {n}. Skipped: {m}.", n=valid, m=skipped|length) }}</p>
+    {% if token %}
+    <form method="post" action="/admin/import/confirm" class="row">
+      <input type="hidden" name="token" value="{{ token }}">
+      <button class="ok">{{ _("Import ({n})", n=valid) }}</button>
+      <a class="btn secondary" href="/admin/import">{{ _("Cancel") }}</a>
+    </form>
+    {% else %}
+    <p>{{ _("Nothing to import.") }}</p>
+    {% endif %}
+  </div>
+
+  {% if skipped %}
+  <h2>{{ _("Skipped rows") }}</h2>
+  <div class="table-wrap"><table>
+    <tr><th>{{ _("Line") }}</th><th>{{ _("Phrase") }}</th><th>{{ _("Translation") }}</th><th>{{ _("Why") }}</th></tr>
+    {% for r in skipped %}
+    <tr><td>{{ r.line }}</td><td>{{ r.data.phrase }}</td><td>{{ r.data.translation }}</td><td>{{ r.problems|join(", ") }}</td></tr>
+    {% endfor %}
+  </table></div>
+  {% endif %}
+
+  {% if valid %}
+  <h2>{{ _("Will be added") }}</h2>
+  <div class="table-wrap"><table>
+    <tr><th>{{ _("Line") }}</th><th>{{ _("Phrase") }}</th><th>{{ _("Translation") }}</th></tr>
+    {% for r in rows if not r.problems %}
+    <tr><td>{{ r.line }}</td><td>{{ r.data.phrase }}</td><td>{{ r.data.translation }}</td></tr>
+    {% endfor %}
+  </table></div>
+  {% endif %}
+  {% endif %}
+<p><a href="/admin/import">← {{ _("Choose another file") }}</a></p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}{{ _(title) }}{% endblock %}
+{% block content %}
+<div class="game-head"><h1>{{ _(title) }}</h1><span class="streak" title="{{ _('Win streak') }}">🔥 {{ streak }}</span></div>
+
+<div class="result {{ 'ok' if correct else 'bad' }}">{{ _("Correct! ¡Muy bien!") if correct else _("Not quite") }}</div>
+
+{% if not correct and mode != "tf" %}
+<p class="muted center">{{ _("You picked: {x}", x=(other.translation if mode == "es" else other.phrase)) }}</p>
+{% elif mode == "tf" and other.id != p.id and other.translation != p.translation %}
+<p class="muted center">{{ _("“{a}” means “{b}”", a=other.translation, b=other.phrase) }}</p>
+{% endif %}
+
+<div class="card open">
+  <p class="big-text" lang="es">{{ p.phrase }}</p>
+  <p class="sub-text" lang="uk">{{ p.translation }}</p>
+  {% if p.note %}<p>{{ p.note }}</p>{% endif %}
+  {% if p.example %}<p class="example">{{ p.example }}</p>{% endif %}
+</div>
+
+<p class="muted center">{{ _("Best streak: {n}", n=best) }}</p>
+<div class="answers two">
+  <a class="btn big" href="/play/{{ mode }}" autofocus>{{ _("Next") }} →</a>
+  <a class="btn big secondary" href="/">{{ _("Menu") }}</a>
+</div>
+{% endblock %}

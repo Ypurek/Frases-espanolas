@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}{{ _("All phrases") }}{% endblock %}
+{% block content %}
+<h1>{{ _("All phrases") }}</h1>
+<form method="get" class="row">
+  <input type="search" name="q" value="{{ q }}" placeholder="{{ _('Search Spanish or Ukrainian') }}" aria-label="{{ _('Search') }}">
+  <button>{{ _("Search") }}</button>
+</form>
+<p class="muted">{{ _("Phrases: {n}", n=rows|length) }}</p>
+{% for r in rows %}
+<details class="card">
+  <summary><strong>{{ r.phrase }}</strong><span>{{ r.translation }}</span></summary>
+  {% if r.note %}<p>{{ r.note }}</p>{% endif %}
+  {% if r.example %}<p class="example">{{ r.example }}</p>{% endif %}
+  {% if not r.note and not r.example %}<p class="muted">{{ _("No notes yet.") }}</p>{% endif %}
+  {% if is_admin %}<p><a class="btn secondary" href="/admin/phrases/{{ r.id }}">{{ _("Edit / delete") }}</a></p>{% endif %}
+</details>
+{% else %}
+<p class="muted">{{ _("Nothing found.") }}</p>
+{% endfor %}
+{% endblock %}

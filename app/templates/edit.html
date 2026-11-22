@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}{{ _("Edit phrase") }}{% endblock %}
+{% block content %}
+<h1>{{ _("Edit phrase") }}</h1>
+<form method="post" class="stack">
+  {% include "_fields.html" %}
+  <div class="row">
+    <button name="action" value="save">{{ _("Save") }}</button>
+    <button name="action" value="delete" class="bad" formnovalidate
+            onclick="return confirm({{ _('Delete this phrase? This cannot be undone.')|tojson|forceescape }})">{{ _("Delete") }}</button>
+  </div>
+</form>
+<p class="center"><a href="/phrases">← {{ _("All phrases") }}</a></p>
+{% endblock %}

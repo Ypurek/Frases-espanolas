@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}{{ _("Menu") }}{% endblock %}
+{% block content %}
+<h1>{{ _("Learn Spanish phrases") }}</h1>
+
+<h2>{{ _("Play") }}</h2>
+<div class="menu">
+  {% for key, label in modes.items() %}
+  <a class="btn big" href="/play/{{ key }}">{{ _(label) }}</a>
+  {% endfor %}
+</div>
+
+<h2>{{ _("Phrases") }}</h2>
+<div class="menu">
+  <a class="btn secondary" href="/phrases">{{ _("Browse & search all phrases") }}</a>
+  <a class="btn secondary" href="/suggest">{{ _("Suggest a phrase") }}</a>
+  <a class="btn secondary" href="/phrases.csv" download>{{ _("Download all phrases (CSV)") }}</a>
+</div>
+
+<h2>{{ _("Admin") }}</h2>
+{% if is_admin %}
+<div class="menu">
+  <a class="btn secondary" href="/admin#add">{{ _("Add a phrase") }}</a>
+  <a class="btn secondary" href="/admin#suggestions">{{ _("Review suggestions") }}{% if pending %} ({{ pending }}){% endif %}</a>
+  <a class="btn secondary" href="/phrases">{{ _("Edit / delete phrases") }}</a>
+  <a class="btn secondary" href="/admin/import">{{ _("Import phrases (CSV)") }}</a>
+  <form method="post" action="/admin/logout" class="menu"><button class="secondary">{{ _("Log out") }}</button></form>
+</div>
+{% else %}
+<form method="post" action="/admin/login" class="row">
+  <input type="password" name="key" placeholder="{{ _('Admin secret key') }}" aria-label="{{ _('Admin secret key') }}" required>
+  <button>{{ _("Log in") }}</button>
+</form>
+{% endif %}
+{% endblock %}

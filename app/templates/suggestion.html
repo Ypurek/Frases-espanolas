@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}{{ _("Review suggestion") }}{% endblock %}
+{% block content %}
+<h1>{{ _("Review suggestion") }}</h1>
+{% if similar %}
+<div class="warn">
+  <strong>{{ _("Similar phrases already exist:") }}</strong>
+  <ul>{% for d, r in similar %}<li>{{ r.phrase }} — {{ r.translation }} <span class="muted">({{ _("distance") }} {{ d }})</span></li>{% endfor %}</ul>
+</div>
+{% endif %}
+<form method="post" class="stack">
+  {% include "_fields.html" %}
+  <div class="row">
+    <button name="action" value="approve" class="ok">{{ _("Approve") }}</button>
+    <button name="action" value="reject" class="bad" formnovalidate>{{ _("Reject") }}</button>
+  </div>
+</form>
+<p class="center"><a href="/admin#suggestions">← {{ _("Suggestions") }}</a></p>
+{% endblock %}

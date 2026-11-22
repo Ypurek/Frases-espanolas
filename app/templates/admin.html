@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}{{ _("Admin") }}{% endblock %}
+{% block content %}
+<h1>{{ _("Admin") }}</h1>
+<p class="muted">{{ _("Phrases in the database: {n}.", n=count) }} {{ _("To edit or delete a phrase, expand it in") }} <a href="/phrases">{{ _("All phrases") }}</a>.</p>
+
+<details class="card" id="add" open>
+  <summary><strong>{{ _("Add a phrase") }}</strong></summary>
+  <form method="post" action="/admin/phrases" class="stack">
+    {% if add_similar %}
+    <div class="warn">
+      <strong>{{ _("Not added yet: similar phrases already exist.") }}</strong>
+      <ul>{% for d, r in add_similar %}<li>{{ r.phrase }} — {{ r.translation }} <span class="muted">({{ _("distance") }} {{ d }})</span></li>{% endfor %}</ul>
+    </div>
+    {% endif %}
+    {% set row = draft %}{% include "_fields.html" %}
+    <div class="row">
+      {% if add_similar %}
+      <button name="force" value="1" class="ok">{{ _("Add anyway") }}</button>
+      <a class="btn secondary" href="/admin">{{ _("Cancel") }}</a>
+      {% else %}
+      <button>{{ _("Add phrase") }}</button>
+      {% endif %}
+    </div>
+  </form>
+</details>
+
+<h2 id="suggestions">{{ _("Suggestions") }} ({{ suggestions|length }})</h2>
+{% if suggestions %}
+<div class="table-wrap"><table>
+  <tr><th>{{ _("Phrase") }}</th><th>{{ _("Translation") }}</th><th>{{ _("Similar in database") }}</th><th>{{ _("Actions") }}</th></tr>
+  {% for s, similar in suggestions %}
+  <tr>
+    <td><strong>{{ s.phrase }}</strong>{% if s.note or s.example %}<br><span class="muted">{{ s.note }}{% if s.note and s.example %} · {% endif %}{{ s.example }}</span>{% endif %}</td>
+    <td>{{ s.translation }}</td>
+    <td>{% for d, r in similar %}<div class="similar">⚠ {{ r.phrase }} — {{ r.translation }} <span class="muted">({{ d }})</span></div>{% else %}<span class="muted">—</span>{% endfor %}</td>
+    <td>
+      <form method="post" action="/admin/suggestions/{{ s.id }}" class="actions">
+        {% for f in ("phrase", "translation", "note", "example") %}<input type="hidden" name="{{ f }}" value="{{ s[f] }}">{% endfor %}
+        <button name="action" value="approve" class="ok small">{{ _("Approve") }}</button>
+        <a class="btn secondary small" href="/admin/suggestions/{{ s.id }}">{{ _("Edit") }}</a>
+        <button name="action" value="reject" class="bad small">{{ _("Reject") }}</button>
+      </form>
+    </td>
+  </tr>
+  {% endfor %}
+</table></div>
+{% else %}
+<p class="muted">{{ _("No pending suggestions.") }}</p>
+{% endif %}
+{% endblock %}
