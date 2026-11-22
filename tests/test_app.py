@@ -7,8 +7,8 @@ os.environ["ADMIN_KEY"] = "secret"
 
 from flask.testing import FlaskClient  # noqa: E402
 
-from app import db  # noqa: E402
-from app.main import app  # noqa: E402
+from frases import db  # noqa: E402
+from frases.main import app  # noqa: E402
 
 
 class Client(FlaskClient):
@@ -38,11 +38,11 @@ def test_passenger_entry_point():
 def test_every_ui_string_is_translated():
     import pathlib
     import re
-    from app.i18n import T
-    root = pathlib.Path(__file__).resolve().parent.parent / "app"
+    from frases.i18n import T
+    root = pathlib.Path(__file__).resolve().parent.parent / "frases"
     code = "".join(p.read_text(encoding="utf-8") for p in [*root.glob("templates/*.html"), *root.glob("*.py")])
     used = {a or b for a, b in re.findall(r"""_\(\s*(?:"([^"]+)"|'([^']+)')""", code)} - {"en"}
-    from app.main import MODES
+    from frases.main import MODES
     used |= set(MODES.values())
     assert not used - set(T), used - set(T)
 
@@ -67,7 +67,7 @@ def test_levenshtein_and_similar():
 
 
 def test_csv_parse():
-    from app import csvio
+    from frases import csvio
     existing = [{"phrase": "Hola", "translation": "Привіт"}]
     assert "UTF-8" in csvio.parse("phrase,translation\nañ,б".encode("cp1251", "replace") + b"\xff", existing)[0]
     assert "Missing column" in csvio.parse(b"foo,bar\n1,2", existing)[0]

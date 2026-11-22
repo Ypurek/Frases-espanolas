@@ -16,7 +16,7 @@ A small Flask + SQLite app for learning Spanish phrases with Ukrainian translati
 
 ```powershell
 uv sync
-$env:ADMIN_KEY = "change-me"; uv run flask --app app.main run --debug
+$env:ADMIN_KEY = "change-me"; uv run flask --app frases.main run --debug
 ```
 
 Open http://127.0.0.1:5000.
